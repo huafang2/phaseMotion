@@ -1,0 +1,63 @@
+# macOS
+.DS_Store
+
+# Xcode build files
+build/
+DerivedData/
+scripts/
+
+# Xcode user settings
+*.xcuserstate
+xcuserdata/
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# CocoaPods
+Pods/
+
+# Carthage
+Carthage/Build/
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/
+fastlane/test_output/
+
+# Archives
+*.xcarchive
+
+# Playground
+timeline.xctimeline
+playground.xcworkspace
+
+# Temporary files
+*.swp
+*.tmp
+
+# Crash logs
+*.crash
+
+# Local configuration files
+.env
+.env.local
+.env.*
+
+# Firebase / Google Service files
+# 如果仓库开源且不想公开配置，取消下面注释
+# GoogleService-Info.plist
+
+# Secrets
+Secrets.plist
+Config.plist
+
+# Cursor
+.cursor/
+
+# VSCode
+.vscode/
+
+# JetBrains
+.idea/
