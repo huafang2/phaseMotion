@@ -61,3 +61,6 @@ Config.plist
 
 # JetBrains
 .idea/
+
+# paper
+*.pdf
