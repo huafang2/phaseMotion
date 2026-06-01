@@ -9,6 +9,19 @@ scripts/
 # Xcode user settings
 *.xcuserstate
 xcuserdata/
+**/xcuserdata/
+*.xcuserdatad/
+*.xccheckout
+*.moved-aside
+
+# Apple signing / provisioning
+*.mobileprovision
+*.provisionprofile
+*.developerprofile
+*.p12
+*.cer
+*.key
+ExportOptions.plist
 
 # Swift Package Manager
 .build/
