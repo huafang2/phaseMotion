@@ -1,6 +1,6 @@
 # Phase Motion
 
-Phase Motion 是一个基于论文 `A_Phase_Discrepancy_Analysis_of_Object_Motion.pdf` 思路实现的 Apple 平台运动检测 App。
+Phase Motion 是一个基于 Zhou、Hou 和 Zhang 提出的 Phase Discrepancy 方法实现的 Apple 平台运动检测 App。
 
 > 说明：本项目是非官方实现，仅用于学习、实验和原型验证；项目不隶属于论文作者、论文发表机构或 Apple。
 
@@ -20,7 +20,6 @@ Phase Motion 是一个基于论文 `A_Phase_Discrepancy_Analysis_of_Object_Motio
 
 ```text
 .
-├── A_Phase_Discrepancy_Analysis_of_Object_Motion.pdf
 └── phaseMotion
     ├── phaseMotion.xcodeproj
     └── phaseMotion
@@ -61,11 +60,9 @@ Phase Motion 是一个基于论文 `A_Phase_Discrepancy_Analysis_of_Object_Motio
 - 点击“设置”可调整颜色融合、时序融合和检测框相关参数。
 - 点击“导入”可选择本地视频进行离线处理。
 
-## 论文对应关系
+## 参考论文
 
-本项目对应目录中的论文：
-
-`A_Phase_Discrepancy_Analysis_of_Object_Motion.pdf`
+Zhou, B., Hou, X., & Zhang, L. (2011). A Phase Discrepancy Analysis of Object Motion. In R. Kimmel, R. Klette, & A. Sugimoto (Eds.), *Computer Vision - ACCV 2010* (Lecture Notes in Computer Science, Vol. 6494, pp. 225-238). Springer, Berlin, Heidelberg. https://doi.org/10.1007/978-3-642-19318-7_18
 
 实现重点是将视频帧转换到频域后，利用帧间相位/幅值差异重建运动显著图，并通过多通道融合、时序融合和阈值区域提取增强可视化结果。
 
