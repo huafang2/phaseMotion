@@ -1,0 +1,51 @@
+# macOS
+.DS_Store
+
+# Xcode build files
+build/
+DerivedData/
+
+# Xcode user settings
+*.xcuserstate
+xcuserdata/
+**/xcuserdata/
+*.xcuserdatad/
+*.xccheckout
+*.moved-aside
+
+# Apple signing / provisioning
+*.mobileprovision
+*.provisionprofile
+*.developerprofile
+*.p12
+*.cer
+*.key
+ExportOptions.plist
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# CocoaPods
+Pods/
+
+# Carthage
+Carthage/Build/
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/
+fastlane/test_output/
+
+# Archives
+*.xcarchive
+
+# Local configuration files
+.env
+.env.local
+.env.*
+
+# Secrets
+Secrets.plist
+Config.plist
