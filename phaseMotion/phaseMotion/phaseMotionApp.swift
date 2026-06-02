@@ -2,7 +2,8 @@
 //  phaseMotionApp.swift
 //  phaseMotion
 //
-//  Created by Chiu Hau Hwa on 2026/1/4.
+//  Created by Jau on 2026/1/4.
+//  Author: Jau
 //
 
 import SwiftUI

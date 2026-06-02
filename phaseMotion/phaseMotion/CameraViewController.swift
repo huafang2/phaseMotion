@@ -1,3 +1,5 @@
+// Author: Jau
+
 #if canImport(UIKit)
 import UIKit
 @preconcurrency import AVFoundation
@@ -145,18 +147,18 @@ class CameraViewController: UIViewController, AVCaptureVideoDataOutputSampleBuff
         backgroundGradientLayer.frame = view.bounds
 
         let topRowY = safeTop + (isLandscape ? 2 : 4)
-        let topRowHeight: CGFloat = isLandscape ? 32 : 36
+        let topRowHeight: CGFloat = isLandscape ? 42 : 46
         let titleWidth = isLandscape
-            ? min(170, max(148, w * 0.28))
-            : min(136, w * 0.34)
+            ? min(178, max(154, w * 0.28))
+            : min(158, w * 0.40)
         topHUD.frame = CGRect(
             x: horizontalPadding,
             y: topRowY,
             width: titleWidth,
             height: topRowHeight
         )
-        titleLabel.frame = CGRect(x: 12, y: 7, width: topHUD.bounds.width - 24, height: 22)
-        subtitleLabel.frame = .zero
+        titleLabel.frame = CGRect(x: 12, y: 6, width: topHUD.bounds.width - 24, height: 19)
+        subtitleLabel.frame = CGRect(x: 12, y: 25, width: topHUD.bounds.width - 24, height: 13)
 
         let settingsButtonWidth: CGFloat = isLandscape ? 68 : 76
         boundingBoxSettingsButton.frame = CGRect(
@@ -425,10 +427,10 @@ class CameraViewController: UIViewController, AVCaptureVideoDataOutputSampleBuff
         titleLabel.font = UIFont.systemFont(ofSize: 17, weight: .bold)
         topHUD.contentView.addSubview(titleLabel)
 
-        subtitleLabel.text = "实时相位差运动分析"
-        subtitleLabel.textColor = UIColor.white.withAlphaComponent(0.72)
-        subtitleLabel.font = UIFont.systemFont(ofSize: 11, weight: .medium)
-        subtitleLabel.isHidden = true
+        subtitleLabel.text = "Created by Jau"
+        subtitleLabel.textColor = UIColor.white.withAlphaComponent(0.68)
+        subtitleLabel.font = UIFont.systemFont(ofSize: 10, weight: .medium)
+        subtitleLabel.isHidden = false
         topHUD.contentView.addSubview(subtitleLabel)
 
         styleStageView(previewView)

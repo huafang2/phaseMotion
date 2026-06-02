@@ -1,3 +1,5 @@
+// Author: Jau
+
 #if canImport(UIKit)
 import UIKit
 

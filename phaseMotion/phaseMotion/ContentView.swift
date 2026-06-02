@@ -1,3 +1,5 @@
+// Author: Jau
+
 import SwiftUI
 
 #if canImport(UIKit)

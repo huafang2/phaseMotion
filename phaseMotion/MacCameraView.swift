@@ -1,3 +1,5 @@
+// Author: Jau
+
 #if os(macOS)
 import SwiftUI
 import AVFoundation

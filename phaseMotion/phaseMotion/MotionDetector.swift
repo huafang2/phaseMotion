@@ -1,3 +1,5 @@
+// Author: Jau
+
 import Accelerate
 
 #if canImport(UIKit)
