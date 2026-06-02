@@ -8,7 +8,7 @@ import AVKit
 import PhotosUI
 import UniformTypeIdentifiers
 
-class CameraViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDelegate, PHPickerViewControllerDelegate {
+class CameraViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDelegate, PHPickerViewControllerDelegate, UIAdaptivePresentationControllerDelegate {
     enum FullscreenStage {
         case preview
         case result
@@ -115,17 +115,21 @@ class CameraViewController: UIViewController, AVCaptureVideoDataOutputSampleBuff
     let importProgressView = UIVisualEffectView(effect: UIBlurEffect(style: .systemThinMaterialDark))
     let importProgressLabel = UILabel()
     let importProgressSpinner = UIActivityIndicatorView(style: .medium)
+    let clearTempFilesButton = UIButton(type: .system)
     var displayZoomScale: CGFloat = 1.0
     var displayContentOffset: CGPoint = .zero
     var fullscreenStage: FullscreenStage?
     var importedVideoProcessor: ImportedVideoSaliencyProcessor?
     var isImportingVideo = false
+    var importedPlaybackCleanupURLs: [URL] = []
+    var importedSourceCleanupURL: URL?
     
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
         setupAvailableCameras() // 先检测摄像头
         setupUI()
+        purgeStaleTemporaryMediaFiles()
         checkPermissions()
         
         // 初始化默认配置
@@ -862,7 +866,6 @@ class CameraViewController: UIViewController, AVCaptureVideoDataOutputSampleBuff
             }
         }
     }
-
     func presentImportOutputModeSheet(for videoURL: URL) {
         let alert = UIAlertController(title: "导入输出", message: "选择导入视频的显著图输出方式", preferredStyle: .actionSheet)
         alert.addAction(UIAlertAction(title: "与现拍一致并保存", style: .default) { [weak self] _ in
@@ -906,6 +909,7 @@ class CameraViewController: UIViewController, AVCaptureVideoDataOutputSampleBuff
     func startImportedVideoProcessing(videoURL: URL, outputMode: ImportedVideoSaliencyProcessor.OutputMode) {
         guard !isImportingVideo else { return }
         isImportingVideo = true
+        importedSourceCleanupURL = videoURL
         importVideoButton.isEnabled = false
         importVideoButton.alpha = 0.6
         showImportProgress(true, message: "正在处理导入视频...")
@@ -927,6 +931,7 @@ class CameraViewController: UIViewController, AVCaptureVideoDataOutputSampleBuff
                 self.importVideoButton.isEnabled = true
                 self.importVideoButton.alpha = 1.0
                 self.showImportProgress(false, message: nil)
+                self.cleanupImportedSourceFile()
 
                 switch outputMode {
                 case .saliencyOnly(let saveToLibrary) where !saveToLibrary:
@@ -984,8 +989,43 @@ class CameraViewController: UIViewController, AVCaptureVideoDataOutputSampleBuff
         let controller = AVPlayerViewController()
         controller.player = player
         controller.modalPresentationStyle = .fullScreen
+        controller.presentationController?.delegate = self
+        importedPlaybackCleanupURLs = [url]
         present(controller, animated: true) {
             player.play()
+        }
+    }
+
+    func presentationControllerDidDismiss(_ presentationController: UIPresentationController) {
+        cleanupImportedPlaybackFiles()
+    }
+
+    func cleanupImportedSourceFile() {
+        guard let url = importedSourceCleanupURL else { return }
+        try? FileManager.default.removeItem(at: url)
+        importedSourceCleanupURL = nil
+    }
+
+    func cleanupImportedPlaybackFiles() {
+        guard !importedPlaybackCleanupURLs.isEmpty else { return }
+        for url in importedPlaybackCleanupURLs {
+            try? FileManager.default.removeItem(at: url)
+        }
+        importedPlaybackCleanupURLs.removeAll()
+    }
+
+    func purgeStaleTemporaryMediaFiles() {
+        let tempDir = FileManager.default.temporaryDirectory
+        let prefixes = ["motion_debug", "imported_saliency_", "phasemotion_import_"]
+
+        guard let urls = try? FileManager.default.contentsOfDirectory(at: tempDir, includingPropertiesForKeys: nil) else {
+            return
+        }
+
+        for url in urls {
+            let name = url.lastPathComponent
+            guard prefixes.contains(where: { name.hasPrefix($0) }) else { continue }
+            try? FileManager.default.removeItem(at: url)
         }
     }
 
@@ -1029,6 +1069,16 @@ class CameraViewController: UIViewController, AVCaptureVideoDataOutputSampleBuff
         boundingBoxDoneButton.titleLabel?.font = UIFont.systemFont(ofSize: 13, weight: .semibold)
         boundingBoxDoneButton.addTarget(self, action: #selector(closeBoundingBoxPanel), for: .touchUpInside)
         boundingBoxScrollView.addSubview(boundingBoxDoneButton)
+
+        clearTempFilesButton.setTitle("清理临时文件", for: .normal)
+        clearTempFilesButton.setTitleColor(.systemOrange, for: .normal)
+        clearTempFilesButton.titleLabel?.font = UIFont.systemFont(ofSize: 13, weight: .semibold)
+        clearTempFilesButton.layer.cornerRadius = 12
+        clearTempFilesButton.layer.borderWidth = 1
+        clearTempFilesButton.layer.borderColor = UIColor.systemOrange.withAlphaComponent(0.35).cgColor
+        clearTempFilesButton.backgroundColor = UIColor.systemOrange.withAlphaComponent(0.12)
+        clearTempFilesButton.addTarget(self, action: #selector(confirmClearTemporaryFiles), for: .touchUpInside)
+        boundingBoxScrollView.addSubview(clearTempFilesButton)
 
         colorFusionLabel.text = "颜色通道联合"
         colorFusionLabel.textColor = .white
@@ -1126,7 +1176,9 @@ class CameraViewController: UIViewController, AVCaptureVideoDataOutputSampleBuff
         layoutSliderRow(label: minAreaLabel, valueLabel: minAreaValueLabel, slider: minAreaSlider, y: sliderStartY + (sliderRowHeight + rowSpacing) * 3, width: rowWidth, padding: horizontalPadding)
         layoutSliderRow(label: maxBoxesLabel, valueLabel: maxBoxesValueLabel, slider: maxBoxesSlider, y: sliderStartY + (sliderRowHeight + rowSpacing) * 4, width: rowWidth, padding: horizontalPadding)
 
-        let contentHeight = sliderStartY + (sliderRowHeight + rowSpacing) * 5 + 12
+        clearTempFilesButton.frame = CGRect(x: horizontalPadding, y: sliderStartY + (sliderRowHeight + rowSpacing) * 5 + 2, width: rowWidth, height: 32)
+
+        let contentHeight = clearTempFilesButton.frame.maxY + 12
         boundingBoxScrollView.contentSize = CGSize(width: contentWidth, height: contentHeight)
     }
 
@@ -1151,6 +1203,31 @@ class CameraViewController: UIViewController, AVCaptureVideoDataOutputSampleBuff
         boundingBoxPanel.isHidden = true
         boundingBoxSettingsButton.backgroundColor = UIColor(red: 0.12, green: 0.18, blue: 0.24, alpha: 0.78)
         view.setNeedsLayout()
+    }
+
+    @objc func confirmClearTemporaryFiles() {
+        let alert = UIAlertController(
+            title: "清理临时文件",
+            message: "将删除 app 在临时目录里生成的导入视频和显著图文件，不影响相册中的视频。",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
+        alert.addAction(UIAlertAction(title: "清理", style: .destructive) { [weak self] _ in
+            self?.clearTemporaryFiles()
+        })
+        present(alert, animated: true)
+    }
+
+    func clearTemporaryFiles() {
+        purgeStaleTemporaryMediaFiles()
+        cleanupImportedSourceFile()
+        cleanupImportedPlaybackFiles()
+
+        if let recorderURL = recorder?.outputURL {
+            try? FileManager.default.removeItem(at: recorderURL)
+        }
+
+        showSimpleAlert(title: "已清理", message: "临时媒体文件已删除")
     }
 
     @objc func resetBoundingBoxSettings() {

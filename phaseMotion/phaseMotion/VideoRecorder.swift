@@ -199,8 +199,12 @@ final class VideoRecorder {
                     print("🏁 [Recorder] Finished writing. Status: \(writer.status.rawValue)")
                     if writer.status == .completed {
                         if saveToLibrary {
-                            self.saveToLibrary(videoURL: writer.outputURL, completion: completion)
+                            self.saveToLibrary(videoURL: writer.outputURL) { success in
+                                self.cleanupTemporaryOutputFile()
+                                completion(success)
+                            }
                         } else {
+                            self.cleanupTemporaryOutputFile()
                             completion(true)
                         }
                     } else {
@@ -234,6 +238,12 @@ final class VideoRecorder {
                 completion(success)
             }
         }
+    }
+
+    private func cleanupTemporaryOutputFile() {
+        guard let url = currentOutputURL else { return }
+        try? FileManager.default.removeItem(at: url)
+        currentOutputURL = nil
     }
     
     private func pixelBuffer(from image: PlatformImage) -> CVPixelBuffer? {
