@@ -68,6 +68,7 @@ final class ImportedVideoSaliencyProcessor {
                 shouldSaveToLibrary = false
                 usesSideBySideLayout = true
             }
+            let shouldKeepOutputForPlayback = !shouldSaveToLibrary
 
             let recorderSize = CGSize(
                 width: usesSideBySideLayout ? self.outputResolution * 2 : self.outputResolution,
@@ -155,20 +156,20 @@ final class ImportedVideoSaliencyProcessor {
             }
 
             if self.isCancelled {
-                recorder.stop(saveToLibrary: shouldSaveToLibrary) { success in
+                recorder.stop(saveToLibrary: shouldSaveToLibrary, cleanupOutput: !shouldKeepOutputForPlayback) { success in
                     completion(success, recorder.outputURL)
                 }
                 return
             }
 
             if reader.status != .completed && reader.status != .reading {
-                recorder.stop(saveToLibrary: shouldSaveToLibrary) { _ in
+                recorder.stop(saveToLibrary: shouldSaveToLibrary, cleanupOutput: !shouldKeepOutputForPlayback) { _ in
                     completion(false, recorder.outputURL)
                 }
                 return
             }
 
-            recorder.stop(saveToLibrary: shouldSaveToLibrary) { success in
+            recorder.stop(saveToLibrary: shouldSaveToLibrary, cleanupOutput: !shouldKeepOutputForPlayback) { success in
                 completion(success, recorder.outputURL)
             }
         }
