@@ -4,6 +4,7 @@
 # Xcode build files
 build/
 DerivedData/
+dist/
 scripts/
 
 # Xcode user settings
