@@ -868,7 +868,7 @@ class CameraViewController: UIViewController, AVCaptureVideoDataOutputSampleBuff
     }
     func presentImportOutputModeSheet(for videoURL: URL) {
         let alert = UIAlertController(title: "导入视频输出", message: "保存会写入相册；播放只生成临时文件。", preferredStyle: .actionSheet)
-        alert.addAction(UIAlertAction(title: "保存：与现拍一致", style: .default) { [weak self] _ in
+        alert.addAction(UIAlertAction(title: "保存：按当前录制设置", style: .default) { [weak self] _ in
             guard let self = self else { return }
             self.startImportedVideoProcessing(videoURL: videoURL, outputMode: .liveFormat(includeRawVideo: self.rawSwitch.isOn, saveToLibrary: true))
         })
