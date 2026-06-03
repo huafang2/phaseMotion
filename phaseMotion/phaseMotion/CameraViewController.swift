@@ -867,21 +867,29 @@ class CameraViewController: UIViewController, AVCaptureVideoDataOutputSampleBuff
         }
     }
     func presentImportOutputModeSheet(for videoURL: URL) {
-        let alert = UIAlertController(title: "导入输出", message: "选择导入视频的显著图输出方式", preferredStyle: .actionSheet)
-        alert.addAction(UIAlertAction(title: "与现拍一致并保存", style: .default) { [weak self] _ in
+        let alert = UIAlertController(title: "导入视频输出", message: "保存会写入相册；播放只生成临时文件。", preferredStyle: .actionSheet)
+        alert.addAction(UIAlertAction(title: "保存：与现拍一致", style: .default) { [weak self] _ in
             guard let self = self else { return }
             self.startImportedVideoProcessing(videoURL: videoURL, outputMode: .liveFormat(includeRawVideo: self.rawSwitch.isOn, saveToLibrary: true))
         })
-        alert.addAction(UIAlertAction(title: "仅显著图并保存", style: .default) { [weak self] _ in
+        alert.addAction(UIAlertAction(title: "保存：仅显著图", style: .default) { [weak self] _ in
             self?.startImportedVideoProcessing(videoURL: videoURL, outputMode: .saliencyOnly(saveToLibrary: true))
         })
-        alert.addAction(UIAlertAction(title: "仅播放显著图", style: .default) { [weak self] _ in
+        alert.addAction(UIAlertAction(title: "保存：原视频 + 显著图并列", style: .default) { [weak self] _ in
+            self?.startImportedVideoProcessing(videoURL: videoURL, outputMode: .sideBySide(saveToLibrary: true))
+        })
+        alert.addAction(UIAlertAction(title: "播放：仅显著图（不保存）", style: .default) { [weak self] _ in
             self?.startImportedVideoProcessing(videoURL: videoURL, outputMode: .saliencyOnly(saveToLibrary: false))
         })
-        alert.addAction(UIAlertAction(title: "原视频与显著图并列播放（不保存）", style: .default) { [weak self] _ in
-            self?.startImportedVideoProcessing(videoURL: videoURL, outputMode: .sideBySidePlayback)
+        alert.addAction(UIAlertAction(title: "播放：原视频 + 显著图并列（不保存）", style: .default) { [weak self] _ in
+            self?.startImportedVideoProcessing(videoURL: videoURL, outputMode: .sideBySide(saveToLibrary: false))
         })
-        alert.addAction(UIAlertAction(title: "取消", style: .cancel))
+        alert.addAction(UIAlertAction(title: "取消", style: .cancel) { [weak self] _ in
+            if videoURL.lastPathComponent.hasPrefix("phasemotion_import_") {
+                try? FileManager.default.removeItem(at: videoURL)
+            }
+            self?.importedSourceCleanupURL = nil
+        })
 
         if let popover = alert.popoverPresentationController {
             popover.sourceView = importVideoButton
@@ -936,12 +944,18 @@ class CameraViewController: UIViewController, AVCaptureVideoDataOutputSampleBuff
                 switch outputMode {
                 case .saliencyOnly(let saveToLibrary) where !saveToLibrary:
                     guard success, let outputURL else {
+                        if let outputURL {
+                            try? FileManager.default.removeItem(at: outputURL)
+                        }
                         self.showSimpleAlert(title: "播放失败", message: "显著图视频生成失败")
                         return
                     }
                     self.presentImportedPlayback(url: outputURL)
-                case .sideBySidePlayback:
+                case .sideBySide(let saveToLibrary) where !saveToLibrary:
                     guard success, let outputURL else {
+                        if let outputURL {
+                            try? FileManager.default.removeItem(at: outputURL)
+                        }
                         self.showSimpleAlert(title: "播放失败", message: "并列视频生成失败")
                         return
                     }
@@ -985,6 +999,11 @@ class CameraViewController: UIViewController, AVCaptureVideoDataOutputSampleBuff
     }
 
     func presentImportedPlayback(url: URL) {
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            showSimpleAlert(title: "播放失败", message: "临时视频文件不存在")
+            return
+        }
+        cleanupImportedPlaybackFiles()
         let player = AVPlayer(url: url)
         let controller = AVPlayerViewController()
         controller.player = player
@@ -1030,7 +1049,7 @@ class CameraViewController: UIViewController, AVCaptureVideoDataOutputSampleBuff
     }
 
     func setupBoundingBoxUI() {
-        boundingBoxSettingsButton.setTitle("框设置", for: .normal)
+        boundingBoxSettingsButton.setTitle("设置", for: .normal)
         boundingBoxSettingsButton.setTitleColor(.white, for: .normal)
         boundingBoxSettingsButton.backgroundColor = UIColor(red: 0.12, green: 0.18, blue: 0.24, alpha: 0.78)
         boundingBoxSettingsButton.layer.cornerRadius = 16

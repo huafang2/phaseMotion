@@ -8,7 +8,7 @@ final class ImportedVideoSaliencyProcessor {
     enum OutputMode {
         case saliencyOnly(saveToLibrary: Bool)
         case liveFormat(includeRawVideo: Bool, saveToLibrary: Bool)
-        case sideBySidePlayback
+        case sideBySide(saveToLibrary: Bool)
     }
 
     private let sourceURL: URL
@@ -63,11 +63,12 @@ final class ImportedVideoSaliencyProcessor {
                 shouldIncludeRawVideo = includeRawVideo
                 shouldSaveToLibrary = saveToLibrary
                 usesSideBySideLayout = false
-            case .sideBySidePlayback:
+            case .sideBySide(let saveToLibrary):
                 shouldIncludeRawVideo = true
-                shouldSaveToLibrary = false
+                shouldSaveToLibrary = saveToLibrary
                 usesSideBySideLayout = true
             }
+            let shouldKeepOutputForPlayback = !shouldSaveToLibrary
 
             let recorderSize = CGSize(
                 width: usesSideBySideLayout ? self.outputResolution * 2 : self.outputResolution,
@@ -145,7 +146,7 @@ final class ImportedVideoSaliencyProcessor {
                         } else {
                             outputImage = detectionResult.boxedSaliencyImage
                         }
-                    case .sideBySidePlayback:
+                    case .sideBySide:
                         let rawImage = PlatformImage.from(cgImage: cgImage)
                         outputImage = self.sideBySideImage(raw: rawImage, processed: detectionResult.boxedSaliencyImage) ?? detectionResult.boxedSaliencyImage
                     }
@@ -155,20 +156,20 @@ final class ImportedVideoSaliencyProcessor {
             }
 
             if self.isCancelled {
-                recorder.stop(saveToLibrary: shouldSaveToLibrary) { success in
+                recorder.stop(saveToLibrary: shouldSaveToLibrary, cleanupOutput: !shouldKeepOutputForPlayback) { success in
                     completion(success, recorder.outputURL)
                 }
                 return
             }
 
             if reader.status != .completed && reader.status != .reading {
-                recorder.stop(saveToLibrary: shouldSaveToLibrary) { _ in
+                recorder.stop(saveToLibrary: shouldSaveToLibrary, cleanupOutput: !shouldKeepOutputForPlayback) { _ in
                     completion(false, recorder.outputURL)
                 }
                 return
             }
 
-            recorder.stop(saveToLibrary: shouldSaveToLibrary) { success in
+            recorder.stop(saveToLibrary: shouldSaveToLibrary, cleanupOutput: !shouldKeepOutputForPlayback) { success in
                 completion(success, recorder.outputURL)
             }
         }

@@ -181,7 +181,7 @@ final class VideoRecorder {
         recordingQueue.sync { currentOutputURL }
     }
 
-    func stop(saveToLibrary: Bool = true, completion: @escaping (Bool) -> Void) {
+    func stop(saveToLibrary: Bool = true, cleanupOutput: Bool = true, completion: @escaping (Bool) -> Void) {
         recordingQueue.async { [weak self] in
             guard let self = self else { completion(false); return }
             print("🛑 [Recorder] Stop requested. Total frames: \(self.frameCount)")
@@ -200,11 +200,15 @@ final class VideoRecorder {
                     if writer.status == .completed {
                         if saveToLibrary {
                             self.saveToLibrary(videoURL: writer.outputURL) { success in
-                                self.cleanupTemporaryOutputFile()
+                                if cleanupOutput {
+                                    self.cleanupTemporaryOutputFile()
+                                }
                                 completion(success)
                             }
                         } else {
-                            self.cleanupTemporaryOutputFile()
+                            if cleanupOutput {
+                                self.cleanupTemporaryOutputFile()
+                            }
                             completion(true)
                         }
                     } else {
@@ -284,11 +288,13 @@ import AVFoundation
 final class VideoRecorder {
     init(size: CGSize, fileName: String = "motion_debug.mp4", expectsRealTime: Bool = true) {}
 
-    func start() {}
+    func start(completion: (() -> Void)? = nil) {
+        completion?()
+    }
 
     func append(image: PlatformImage, timestamp: CMTime) {}
 
-    func stop(saveToLibrary: Bool = true, completion: @escaping (Bool) -> Void) {
+    func stop(saveToLibrary: Bool = true, cleanupOutput: Bool = true, completion: @escaping (Bool) -> Void) {
         completion(false)
     }
 }
