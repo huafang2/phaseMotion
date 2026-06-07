@@ -43,7 +43,7 @@ class CameraViewController: UIViewController, AVCaptureVideoDataOutputSampleBuff
     var availableCameras: [CameraOption] = []
     
     // MARK: - UI Elements
-    let topHUD = UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterialDark))
+    let topHUD = UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterial))
     let titleLabel = UILabel()
     let subtitleLabel = UILabel()
     let previewView = UIView()
@@ -56,7 +56,7 @@ class CameraViewController: UIViewController, AVCaptureVideoDataOutputSampleBuff
     let previewSubtitleLabel = UILabel()
     let resultBadgeLabel = UILabel()
     let resultSubtitleLabel = UILabel()
-    let controlsPanel = UIVisualEffectView(effect: UIBlurEffect(style: .systemThinMaterialDark))
+    let controlsPanel = UIVisualEffectView(effect: UIBlurEffect(style: .systemThinMaterial))
     let controlsTitleLabel = UILabel()
     let controlsSubtitleLabel = UILabel()
     let rawCaptionLabel = UILabel()
@@ -71,7 +71,7 @@ class CameraViewController: UIViewController, AVCaptureVideoDataOutputSampleBuff
     let resolutionMenuButton = UIButton(type: .system)
     let boundingBoxSettingsButton = UIButton(type: .system)
     let importVideoButton = UIButton(type: .system)
-    let boundingBoxPanel = UIVisualEffectView(effect: UIBlurEffect(style: .systemThinMaterialDark))
+    let boundingBoxPanel = UIVisualEffectView(effect: UIBlurEffect(style: .systemThinMaterial))
     let boundingBoxScrollView = UIScrollView()
     let boundingBoxTitleLabel = UILabel()
     let boundingBoxResetButton = UIButton(type: .system)
@@ -109,10 +109,10 @@ class CameraViewController: UIViewController, AVCaptureVideoDataOutputSampleBuff
     let cameraControl = UISegmentedControl(items: [])
     // 【新增】毛玻璃背景 (模拟 iOS 原生相机 HUD 风格)
     // 使用 .systemUltraThinMaterialDark 提供极薄的深色磨砂效果，非常有科技感且遮挡感低
-    let cameraControlBlur = UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterialDark))
+    let cameraControlBlur = UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterial))
     let fullscreenBackdropView = UIView()
     let fullscreenHintLabel = UILabel()
-    let importProgressView = UIVisualEffectView(effect: UIBlurEffect(style: .systemThinMaterialDark))
+    let importProgressView = UIVisualEffectView(effect: UIBlurEffect(style: .systemThinMaterial))
     let importProgressLabel = UILabel()
     let importProgressSpinner = UIActivityIndicatorView(style: .medium)
     let clearTempFilesButton = UIButton(type: .system)
@@ -164,13 +164,14 @@ class CameraViewController: UIViewController, AVCaptureVideoDataOutputSampleBuff
         titleLabel.frame = CGRect(x: 12, y: 6, width: topHUD.bounds.width - 24, height: 19)
         subtitleLabel.frame = CGRect(x: 12, y: 25, width: topHUD.bounds.width - 24, height: 13)
 
-        let settingsButtonWidth: CGFloat = isLandscape ? 68 : 76
+        let settingsButtonWidth: CGFloat = isLandscape ? 30 : 34
         boundingBoxSettingsButton.frame = CGRect(
             x: topHUD.frame.maxX + 8,
-            y: topRowY + (isLandscape ? 1 : 2),
+            y: topRowY + (isLandscape ? 1 : 1),
             width: settingsButtonWidth,
-            height: isLandscape ? 30 : 32
+            height: isLandscape ? 30 : 34
         )
+        boundingBoxSettingsButton.layer.cornerRadius = settingsButtonWidth / 2
 
         let importButtonWidth: CGFloat = isLandscape ? 68 : 76
         if isLandscape {
@@ -307,6 +308,7 @@ class CameraViewController: UIViewController, AVCaptureVideoDataOutputSampleBuff
         updatePreviewLayerFrame()
         applyDisplayZoom()
         updateCaptureConnectionsForCurrentOrientation()
+        updateThemeColors()
     }
     
     // 检测设备支持的摄像头
@@ -436,6 +438,10 @@ class CameraViewController: UIViewController, AVCaptureVideoDataOutputSampleBuff
         subtitleLabel.font = UIFont.systemFont(ofSize: 10, weight: .medium)
         subtitleLabel.isHidden = false
         topHUD.contentView.addSubview(subtitleLabel)
+
+        topHUD.isUserInteractionEnabled = true
+        let hudTapGesture = UITapGestureRecognizer(target: self, action: #selector(topHUDTapped))
+        topHUD.addGestureRecognizer(hudTapGesture)
 
         styleStageView(previewView)
         view.addSubview(previewView)
@@ -582,6 +588,139 @@ class CameraViewController: UIViewController, AVCaptureVideoDataOutputSampleBuff
         setupImportProgressUI()
         setupInteractionGestures()
         setupBoundingBoxUI()
+        updateThemeColors()
+    }
+
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        if traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) {
+            updateThemeColors()
+        }
+    }
+
+    func updateThemeColors() {
+        let isDark = traitCollection.userInterfaceStyle == .dark
+        
+        // 1. View background & Gradient
+        view.backgroundColor = isDark 
+            ? UIColor(red: 0.03, green: 0.04, blue: 0.09, alpha: 1.0)
+            : UIColor(red: 0.96, green: 0.96, blue: 0.98, alpha: 1.0)
+            
+        backgroundGradientLayer.colors = isDark
+            ? [
+                UIColor(red: 0.08, green: 0.13, blue: 0.24, alpha: 1.0).cgColor,
+                UIColor(red: 0.06, green: 0.06, blue: 0.12, alpha: 1.0).cgColor,
+                UIColor(red: 0.11, green: 0.08, blue: 0.14, alpha: 1.0).cgColor
+              ]
+            : [
+                UIColor(red: 0.94, green: 0.96, blue: 0.98, alpha: 1.0).cgColor,
+                UIColor(red: 0.96, green: 0.96, blue: 0.98, alpha: 1.0).cgColor,
+                UIColor(red: 0.98, green: 0.96, blue: 0.98, alpha: 1.0).cgColor
+              ]
+              
+        // 2. HUD Blur Effects
+        topHUD.effect = UIBlurEffect(style: .systemUltraThinMaterial)
+        controlsPanel.effect = UIBlurEffect(style: .systemThinMaterial)
+        cameraControlBlur.effect = UIBlurEffect(style: .systemUltraThinMaterial)
+        boundingBoxPanel.effect = UIBlurEffect(style: .systemThinMaterial)
+        
+        // 3. Card views border & background
+        previewView.backgroundColor = isDark ? UIColor.white.withAlphaComponent(0.03) : UIColor.black.withAlphaComponent(0.02)
+        previewView.layer.borderColor = isDark ? UIColor.white.withAlphaComponent(0.10).cgColor : UIColor.black.withAlphaComponent(0.08).cgColor
+        
+        resultImageView.backgroundColor = isDark ? UIColor(red: 0.04, green: 0.05, blue: 0.10, alpha: 0.86) : UIColor(red: 0.98, green: 0.98, blue: 1.0, alpha: 0.86)
+        resultImageView.layer.borderColor = isDark ? UIColor.white.withAlphaComponent(0.10).cgColor : UIColor.black.withAlphaComponent(0.08).cgColor
+        
+        // 4. Bounding Box settings panel border
+        boundingBoxPanel.layer.borderColor = isDark ? UIColor.white.withAlphaComponent(0.08).cgColor : UIColor.black.withAlphaComponent(0.08).cgColor
+        
+        // 5. Button styles (normal / active)
+        resolutionMenuButton.backgroundColor = isDark ? UIColor.white.withAlphaComponent(0.08) : UIColor.black.withAlphaComponent(0.05)
+        resolutionMenuButton.layer.borderColor = isDark 
+            ? UIColor.systemYellow.withAlphaComponent(0.35).cgColor 
+            : UIColor.systemYellow.withAlphaComponent(0.50).cgColor
+        resolutionMenuButton.setTitleColor(isDark ? .white : .darkGray, for: .normal)
+        
+        importVideoButton.backgroundColor = isDark ? UIColor.white.withAlphaComponent(0.08) : UIColor.black.withAlphaComponent(0.05)
+        importVideoButton.layer.borderColor = isDark
+            ? UIColor.systemMint.withAlphaComponent(0.32).cgColor
+            : UIColor.systemMint.withAlphaComponent(0.50).cgColor
+        importVideoButton.setTitleColor(isDark ? .white : .darkGray, for: .normal)
+        
+        // BoundingBoxSettingsButton
+        boundingBoxSettingsButton.backgroundColor = boundingBoxPanel.isHidden
+            ? (isDark ? UIColor(red: 0.12, green: 0.18, blue: 0.24, alpha: 0.78) : UIColor(red: 0.88, green: 0.92, blue: 0.96, alpha: 0.85))
+            : (isDark ? UIColor.systemYellow.withAlphaComponent(0.25) : UIColor.systemYellow.withAlphaComponent(0.40))
+        boundingBoxSettingsButton.layer.borderColor = isDark
+            ? UIColor.systemYellow.withAlphaComponent(0.45).cgColor
+            : UIColor.systemYellow.withAlphaComponent(0.60).cgColor
+        boundingBoxSettingsButton.tintColor = isDark ? .white : UIColor(red: 0.08, green: 0.13, blue: 0.24, alpha: 1.0)
+        
+        // 6. Text Label Colors
+        titleLabel.textColor = isDark ? .white : .black
+        subtitleLabel.textColor = isDark ? UIColor.white.withAlphaComponent(0.68) : UIColor.black.withAlphaComponent(0.60)
+        
+        controlsTitleLabel.textColor = isDark ? .white : .black
+        controlsSubtitleLabel.textColor = isDark ? UIColor.white.withAlphaComponent(0.65) : UIColor.black.withAlphaComponent(0.55)
+        
+        rawCaptionLabel.textColor = isDark ? UIColor.white.withAlphaComponent(0.72) : UIColor.black.withAlphaComponent(0.62)
+        zoomCaptionLabel.textColor = isDark ? UIColor.white.withAlphaComponent(0.72) : UIColor.black.withAlphaComponent(0.62)
+        downsampleCaptionLabel.textColor = isDark ? UIColor.white.withAlphaComponent(0.72) : UIColor.black.withAlphaComponent(0.62)
+        
+        rawLabel.textColor = isDark ? UIColor.white.withAlphaComponent(0.92) : UIColor.black.withAlphaComponent(0.85)
+        recordHintLabel.textColor = isDark ? UIColor.white.withAlphaComponent(0.62) : UIColor.black.withAlphaComponent(0.52)
+        
+        boundingBoxTitleLabel.textColor = isDark ? .white : .black
+        colorFusionLabel.textColor = isDark ? UIColor.white.withAlphaComponent(0.9) : UIColor.black.withAlphaComponent(0.8)
+        temporalFusionLabel.textColor = isDark ? UIColor.white.withAlphaComponent(0.9) : UIColor.black.withAlphaComponent(0.8)
+        temporalFrameCountLabel.textColor = isDark ? UIColor.white.withAlphaComponent(0.72) : UIColor.black.withAlphaComponent(0.62)
+        temporalFrameCountValueLabel.textColor = isDark ? .systemMint : .systemMint
+        showBoundingBoxLabel.textColor = isDark ? UIColor.white.withAlphaComponent(0.9) : UIColor.black.withAlphaComponent(0.8)
+        seedThresholdLabel.textColor = isDark ? UIColor.white.withAlphaComponent(0.72) : UIColor.black.withAlphaComponent(0.62)
+        seedThresholdValueLabel.textColor = isDark ? .systemYellow : .systemYellow
+        regionThresholdLabel.textColor = isDark ? UIColor.white.withAlphaComponent(0.72) : UIColor.black.withAlphaComponent(0.62)
+        regionThresholdValueLabel.textColor = isDark ? .systemYellow : .systemYellow
+        suppressionRadiusLabel.textColor = isDark ? UIColor.white.withAlphaComponent(0.72) : UIColor.black.withAlphaComponent(0.62)
+        suppressionRadiusValueLabel.textColor = isDark ? .systemYellow : .systemYellow
+        minAreaLabel.textColor = isDark ? UIColor.white.withAlphaComponent(0.72) : UIColor.black.withAlphaComponent(0.62)
+        minAreaValueLabel.textColor = isDark ? .systemYellow : .systemYellow
+        maxBoxesLabel.textColor = isDark ? UIColor.white.withAlphaComponent(0.72) : UIColor.black.withAlphaComponent(0.62)
+        maxBoxesValueLabel.textColor = isDark ? .systemYellow : .systemYellow
+        
+        // 7. Sliders track colors
+        zoomSlider.maximumTrackTintColor = isDark ? UIColor.white.withAlphaComponent(0.18) : UIColor.black.withAlphaComponent(0.12)
+        downsampleMainSlider.maximumTrackTintColor = isDark ? UIColor.white.withAlphaComponent(0.18) : UIColor.black.withAlphaComponent(0.12)
+        let sliderMaxTrackColor = isDark ? UIColor.white.withAlphaComponent(0.22) : UIColor.black.withAlphaComponent(0.12)
+        temporalFrameCountSlider.maximumTrackTintColor = sliderMaxTrackColor
+        seedThresholdSlider.maximumTrackTintColor = sliderMaxTrackColor
+        regionThresholdSlider.maximumTrackTintColor = sliderMaxTrackColor
+        suppressionRadiusSlider.maximumTrackTintColor = sliderMaxTrackColor
+        minAreaSlider.maximumTrackTintColor = sliderMaxTrackColor
+        maxBoxesSlider.maximumTrackTintColor = sliderMaxTrackColor
+        
+        // 8. Clear button color
+        clearTempFilesButton.backgroundColor = isDark
+            ? UIColor.systemOrange.withAlphaComponent(0.12)
+            : UIColor.systemOrange.withAlphaComponent(0.08)
+        clearTempFilesButton.layer.borderColor = isDark
+            ? UIColor.systemOrange.withAlphaComponent(0.35).cgColor
+            : UIColor.systemOrange.withAlphaComponent(0.50).cgColor
+            
+        // 9. Segmented Control configuration
+        cameraControl.selectedSegmentTintColor = isDark
+            ? UIColor.systemMint.withAlphaComponent(0.28)
+            : UIColor.systemMint.withAlphaComponent(0.35)
+        
+        let normalTextAttributes: [NSAttributedString.Key: Any] = [
+            .foregroundColor: isDark ? UIColor.white : UIColor.darkGray,
+            .font: UIFont.systemFont(ofSize: 11, weight: .medium)
+        ]
+        let selectedTextAttributes: [NSAttributedString.Key: Any] = [
+            .foregroundColor: isDark ? UIColor.white : UIColor.black,
+            .font: UIFont.systemFont(ofSize: 11, weight: .semibold)
+        ]
+        cameraControl.setTitleTextAttributes(normalTextAttributes, for: .normal)
+        cameraControl.setTitleTextAttributes(selectedTextAttributes, for: .selected)
     }
 
     func styleStageView(_ view: UIView) {
@@ -831,6 +970,28 @@ class CameraViewController: UIViewController, AVCaptureVideoDataOutputSampleBuff
         }
     }
 
+    @objc func topHUDTapped() {
+        let isDark = traitCollection.userInterfaceStyle == .dark
+        let highlightColor = isDark ? UIColor.white.withAlphaComponent(0.18) : UIColor.black.withAlphaComponent(0.12)
+        
+        UIView.animate(withDuration: 0.08, animations: {
+            self.topHUD.contentView.backgroundColor = highlightColor
+        }) { _ in
+            UIView.animate(withDuration: 0.18, animations: {
+                self.topHUD.contentView.backgroundColor = .clear
+            }) { _ in
+                let alert = UIAlertController(title: "关于作者", message: "项目开源地址：\nhttps://github.com/huafang2/phaseMotion", preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "访问 GitHub", style: .default) { _ in
+                    if let url = URL(string: "https://github.com/huafang2/phaseMotion") {
+                        UIApplication.shared.open(url, options: [:], completionHandler: nil)
+                    }
+                })
+                alert.addAction(UIAlertAction(title: "确定", style: .cancel, handler: nil))
+                self.present(alert, animated: true, completion: nil)
+            }
+        }
+    }
+
     @objc func importVideoTapped() {
         guard !isImportingVideo else { return }
         var configuration = PHPickerConfiguration(photoLibrary: .shared())
@@ -1049,18 +1210,16 @@ class CameraViewController: UIViewController, AVCaptureVideoDataOutputSampleBuff
     }
 
     func setupBoundingBoxUI() {
-        boundingBoxSettingsButton.setTitle("设置", for: .normal)
-        boundingBoxSettingsButton.setTitleColor(.white, for: .normal)
-        boundingBoxSettingsButton.backgroundColor = UIColor(red: 0.12, green: 0.18, blue: 0.24, alpha: 0.78)
-        boundingBoxSettingsButton.layer.cornerRadius = 16
-        boundingBoxSettingsButton.layer.borderColor = UIColor.systemYellow.withAlphaComponent(0.45).cgColor
-        boundingBoxSettingsButton.layer.borderWidth = 1
-        boundingBoxSettingsButton.titleLabel?.font = UIFont.systemFont(ofSize: 12, weight: .semibold)
+        let config = UIImage.SymbolConfiguration(pointSize: 15, weight: .bold)
+        let gearImage = UIImage(systemName: "gearshape.fill", withConfiguration: config)
+        boundingBoxSettingsButton.setImage(gearImage, for: .normal)
+        boundingBoxSettingsButton.setTitle(nil, for: .normal)
         boundingBoxSettingsButton.addTarget(self, action: #selector(toggleBoundingBoxPanel), for: .touchUpInside)
         boundingBoxSettingsButton.layer.shadowColor = UIColor.black.withAlphaComponent(0.28).cgColor
         boundingBoxSettingsButton.layer.shadowOpacity = 1
         boundingBoxSettingsButton.layer.shadowRadius = 12
         boundingBoxSettingsButton.layer.shadowOffset = CGSize(width: 0, height: 6)
+        boundingBoxSettingsButton.layer.borderWidth = 1
         view.addSubview(boundingBoxSettingsButton)
 
         boundingBoxPanel.isHidden = true
@@ -1212,15 +1371,19 @@ class CameraViewController: UIViewController, AVCaptureVideoDataOutputSampleBuff
         if !boundingBoxPanel.isHidden {
             view.bringSubviewToFront(boundingBoxPanel)
         }
+        let isDark = traitCollection.userInterfaceStyle == .dark
         boundingBoxSettingsButton.backgroundColor = boundingBoxPanel.isHidden
-            ? UIColor(red: 0.12, green: 0.18, blue: 0.24, alpha: 0.78)
-            : UIColor.systemYellow.withAlphaComponent(0.25)
+            ? (isDark ? UIColor(red: 0.12, green: 0.18, blue: 0.24, alpha: 0.78) : UIColor(red: 0.88, green: 0.92, blue: 0.96, alpha: 0.85))
+            : (isDark ? UIColor.systemYellow.withAlphaComponent(0.25) : UIColor.systemYellow.withAlphaComponent(0.40))
         view.setNeedsLayout()
     }
 
     @objc func closeBoundingBoxPanel() {
         boundingBoxPanel.isHidden = true
-        boundingBoxSettingsButton.backgroundColor = UIColor(red: 0.12, green: 0.18, blue: 0.24, alpha: 0.78)
+        let isDark = traitCollection.userInterfaceStyle == .dark
+        boundingBoxSettingsButton.backgroundColor = isDark
+            ? UIColor(red: 0.12, green: 0.18, blue: 0.24, alpha: 0.78)
+            : UIColor(red: 0.88, green: 0.92, blue: 0.96, alpha: 0.85)
         view.setNeedsLayout()
     }
 
